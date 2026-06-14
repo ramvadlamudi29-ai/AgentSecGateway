@@ -50,11 +50,11 @@ class ScannerTests(unittest.TestCase):
             result = AgentSecScanner().scan(str(root))
             comparison = compare_with_baseline(result.findings, None)
             self.assertEqual(comparison["added"], [])
-            baseline = {"findings": [result.findings[0].to_dict()]}
+            baseline = {"findings": [finding.to_dict() for finding in result.findings]}
             baseline_path = root / "baseline.json"
             baseline_path.write_text(__import__("json").dumps(baseline), encoding="utf-8")
             comparison = compare_with_baseline(result.findings, str(baseline_path))
-            self.assertEqual(comparison["unchanged"], 1)
+            self.assertEqual(comparison["unchanged"], len(result.findings))
             self.assertEqual(comparison["added"], [])
             self.assertEqual(comparison["removed"], [])
 
