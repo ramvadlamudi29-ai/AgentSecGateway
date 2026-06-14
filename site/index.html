@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentSec Gateway | AI Agent Security Audits</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <nav>
+      <a class="logo" href="#top">AgentSec Gateway</a>
+      <div class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#audit">Audit</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </nav>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">AI Agent Security + MCP Governance</p>
+        <h1>Ship Claude, Cursor, Kilo, and MCP agents without security surprises.</h1>
+        <p class="lead">We scan agent skills, MCP servers, prompts, tool permissions, secrets, and CI workflows for prompt injection, data exfiltration, over-permissioned tools, and supply-chain risks.</p>
+        <div class="actions">
+          <a class="button primary" href="#audit">Get a paid audit</a>
+          <a class="button secondary" href="https://github.com" target="_blank" rel="noreferrer">View open-source scanner</a>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span>Risk Report</span>
+          <strong>100/100</strong>
+        </div>
+        <div class="metric"><span>Critical</span><b>4</b></div>
+        <div class="metric"><span>High</span><b>1</b></div>
+        <div class="metric"><span>Medium</span><b>3</b></div>
+        <div class="metric"><span>Low</span><b>1</b></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="problem" class="section">
+      <h2>The new risk surface</h2>
+      <div class="cards">
+        <article><h3>Prompt injection</h3><p>Agents can be tricked into revealing instructions, ignoring policy, or sending sensitive data to external endpoints.</p></article>
+        <article><h3>MCP over-permissions</h3><p>MCP tools often get broad file, shell, database, and network access without least-privilege review.</p></article>
+        <article><h3>Secret leakage</h3><p>Agent skills and repos can accidentally expose API keys, tokens, credentials, and environment files.</p></article>
+        <article><h3>Supply-chain risk</h3><p>Install scripts, remote fetches, eval, child process execution, and vulnerable dependencies create deployment risk.</p></article>
+      </div>
+    </section>
+
+    <section id="audit" class="section dark">
+      <h2>Paid audit package</h2>
+      <div class="audit-grid">
+        <div>
+          <h3>What we audit</h3>
+          <ul>
+            <li>Claude Skills, Cursor skills, Kilo workflows, OpenAI agent prompts</li>
+            <li>MCP servers, tool definitions, permissions, and data sources</li>
+            <li>Secrets, .env patterns, API keys, tokens, and credentials</li>
+            <li>Prompt injection, exfiltration, shell execution, database mutations</li>
+            <li>GitHub Actions, Dockerfiles, dependency manifests, CI/CD risk</li>
+          </ul>
+        </div>
+        <form class="audit-form">
+          <label>Name<input name="name" placeholder="Your name"></label>
+          <label>Email<input name="email" type="email" placeholder="you@company.com"></label>
+          <label>Repo or company<input name="scope" placeholder="github.com/org/repo"></label>
+          <label>Package<select name="package"><option>Starter Audit</option><option>Team Audit</option><option>Enterprise Audit</option></select></label>
+          <label>Message<textarea name="message" placeholder="Tell us what you want audited"></textarea></label>
+          <button type="button">Request audit</button>
+          <p class="note">Frontend demo only. Connect this form to your CRM, Stripe checkout, or email backend.</p>
+        </form>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <h2>Pricing</h2>
+      <div class="pricing">
+        <article class="price"><h3>Starter</h3><p class="amount">$299</p><p>One repo or one agent skill pack.</p><ul><li>Automated scan</li><li>Markdown report</li><li>Priority findings summary</li></ul></article>
+        <article class="price featured"><h3>Team</h3><p class="amount">$999</p><p>Up to 5 repos or agent workflows.</p><ul><li>Automated scan</li><li>Manual review</li><li>Remediation plan</li><li>30-minute call</li></ul></article>
+        <article class="price"><h3>Enterprise</h3><p class="amount">$3k+</p><p>Custom agent governance rollout.</p><ul><li>Private audit</li><li>Policy design</li><li>CI/CD integration</li><li>Executive report</li></ul></article>
+      </div>
+    </section>
+
+    <section id="faq" class="section dark">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <div><h3>Is this only for security teams?</h3><p>No. It is built for engineering teams shipping AI agents with real tools and real data access.</p></div>
+        <div><h3>Can this scan private repos?</h3><p>Yes. Private audits can be run locally or through a private CI job. Do not send private code to unknown services.</p></div>
+        <div><h3>Does this replace penetration testing?</h3><p>No. It is a focused AI-agent and MCP security review layer that works before deployment.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>AgentSec Gateway MVP. Built for AI agent security, MCP governance, and paid audits.</p>
+  </footer>
+</body>
+</html>

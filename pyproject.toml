@@ -1,0 +1,18 @@
+[project]
+name = "agentsec-gateway"
+version = "0.1.0"
+description = "Scan AI agent skills, MCP servers, and coding-agent workflows for security risks."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "AgentSec Gateway" }]
+
+[project.scripts]
+agentsec-scan = "agentsec_scan.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["agentsec_scan*"]
+exclude = ["reports*", "examples*", "tests*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,11 @@
+mcp:
+  name: example-network-mcp
+  permissions: '*'
+  tools:
+    - shell
+    - file_read
+    - network_request
+  data_sources:
+    - postgres
+    - redis
+  notes: This example is intentionally risky for testing.
