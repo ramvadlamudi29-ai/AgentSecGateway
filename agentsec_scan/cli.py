@@ -16,6 +16,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", default="agentsec-report", help="Directory for generated reports")
     parser.add_argument("--policy", default=None, help="JSON policy file with ignore_rules and exclude_paths")
     parser.add_argument("--exclude", action="append", default=[], help="Path fragment to exclude from scanning. Can be repeated")
+    parser.add_argument("--baseline", default=None, help="Previous JSON report to compare against")
     parser.add_argument("--fail-on", default="critical", choices=sorted(FAIL_LEVELS), help="Exit non-zero when findings reach this severity")
     parser.add_argument("--quiet", action="store_true", help="Print only the final risk score")
     args = parser.parse_args(argv)
@@ -27,8 +28,9 @@ def main(argv: list[str] | None = None) -> int:
     policy.exclude_paths.update(args.exclude)
     result = AgentSecScanner().scan(str(target), policy)
     written = write_reports(result, args.output_dir, formats)
+    comparison = compare_with_baseline(result.findings, args.baseline) if args.baseline else None
     if not args.quiet:
-        print_terminal_summary(result, written)
+        print_terminal_summary(result, written, comparison)
     else:
         print(json.dumps(result.summary, indent=2))
     return exit_code(result, args.fail_on)
@@ -45,7 +47,27 @@ def parse_formats(value: str) -> list[str]:
     return formats
 
 
-def print_terminal_summary(result, written: dict[str, str]) -> None:
+def compare_with_baseline(findings, baseline_path: str | None) -> dict:
+    if not baseline_path:
+        return {"added": [], "removed": [], "unchanged": 0}
+    data = json.loads(Path(baseline_path).read_text(encoding="utf-8"))
+    baseline_keys = {finding_key(item) for item in data.get("findings", [])}
+    current = {finding_key(finding.to_dict()) for finding in findings}
+    added_keys = sorted(current - baseline_keys)
+    removed_keys = sorted(baseline_keys - current)
+    return {"added": added_keys, "removed": removed_keys, "unchanged": len(current & baseline_keys)}
+
+
+def finding_key(finding: dict) -> str:
+    return "|".join([
+        str(finding.get("rule_id", "")),
+        str(finding.get("file", "")),
+        str(finding.get("line", "")),
+        str(finding.get("severity", "")),
+    ])
+
+
+def print_terminal_summary(result, written: dict[str, str], comparison: dict | None = None) -> None:
     summary = result.summary
     print("AgentSec Gateway Scan")
     print(f"Target: {result.target}")
@@ -55,6 +77,8 @@ def print_terminal_summary(result, written: dict[str, str]) -> None:
     print("Severity counts:", json.dumps(summary["counts_by_severity"], sort_keys=True))
     for fmt, path in sorted(written.items()):
         print(f"{fmt} report: {path}")
+    if comparison is not None:
+        print(f"Baseline comparison: added={len(comparison['added'])}, removed={len(comparison['removed'])}, unchanged={comparison['unchanged']}")
 
 
 def exit_code(result, fail_on: str) -> int:

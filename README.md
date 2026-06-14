@@ -27,7 +27,23 @@ agentsec-scan . --format markdown,json,sarif --output-dir reports --exclude node
 Use a policy file to ignore noisy rules:
 
 ```powershell
-agentsec-scan . --policy policy.json --format markdown,json,sarif --output-dir reports
+agentsec-scan . --policy policy.example.json --format markdown,json,sarif --output-dir reports
+```
+
+Compare against a previous JSON report:
+
+```powershell
+agentsec-scan . --baseline reports\agentsec-report.json --format markdown,json,sarif --output-dir reports
+```
+
+## GitHub Pages
+
+The landing page is published from `site/` by `.github/workflows/pages.yml`.
+
+Expected URL:
+
+```text
+https://ramvadlamudi29-ai.github.io/AgentSecGateway/
 ```
 
 ## Scan the bundled risky example
@@ -35,6 +51,10 @@ agentsec-scan . --policy policy.json --format markdown,json,sarif --output-dir r
 ```powershell
 agentsec-scan examples\risky-skill --format markdown,json,sarif --output-dir reports
 ```
+
+## Audit request flow
+
+The landing page form creates a prefilled GitHub Issue using `.github/ISSUE_TEMPLATE/audit-request.md`. This gives a zero-backend way to collect paid audit requests.
 
 ## GitHub Action
 

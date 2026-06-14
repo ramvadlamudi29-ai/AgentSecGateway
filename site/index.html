@@ -24,7 +24,7 @@
         <p class="lead">We scan agent skills, MCP servers, prompts, tool permissions, secrets, and CI workflows for prompt injection, data exfiltration, over-permissioned tools, and supply-chain risks.</p>
         <div class="actions">
           <a class="button primary" href="#audit">Get a paid audit</a>
-          <a class="button secondary" href="https://github.com" target="_blank" rel="noreferrer">View open-source scanner</a>
+          <a class="button secondary" href="https://github.com/ramvadlamudi29-ai/AgentSecGateway" target="_blank" rel="noreferrer">View open-source scanner</a>
         </div>
       </div>
       <div class="panel">
@@ -65,13 +65,17 @@
           </ul>
         </div>
         <form class="audit-form">
-          <label>Name<input name="name" placeholder="Your name"></label>
-          <label>Email<input name="email" type="email" placeholder="you@company.com"></label>
-          <label>Repo or company<input name="scope" placeholder="github.com/org/repo"></label>
+          <label>Name<input name="name" placeholder="Your name" required></label>
+          <label>Email<input name="email" type="email" placeholder="you@company.com" required></label>
+          <label>Company<input name="company" placeholder="Company name"></label>
+          <label>Repo or system<input name="scope" placeholder="github.com/org/repo" required></label>
+          <label>Agent framework<input name="framework" placeholder="Claude Code, Cursor, Kilo, OpenAI, MCP"></label>
+          <label>MCP servers<input name="mcp" placeholder="Cloudflare MCP, custom MCP, none"></label>
+          <label>Deadline<input name="deadline" type="date"></label>
           <label>Package<select name="package"><option>Starter Audit</option><option>Team Audit</option><option>Enterprise Audit</option></select></label>
-          <label>Message<textarea name="message" placeholder="Tell us what you want audited"></textarea></label>
-          <button type="button">Request audit</button>
-          <p class="note">Frontend demo only. Connect this form to your CRM, Stripe checkout, or email backend.</p>
+          <label>Message<textarea name="message" placeholder="Tell us what you want audited" required></textarea></label>
+          <button type="submit">Request audit</button>
+          <p class="note">This creates a prefilled GitHub Issue audit request without sending your private repo code anywhere.</p>
         </form>
       </div>
     </section>
@@ -98,5 +102,6 @@
   <footer>
     <p>AgentSec Gateway MVP. Built for AI agent security, MCP governance, and paid audits.</p>
   </footer>
+  <script src="app.js"></script>
 </body>
 </html>
