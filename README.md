@@ -81,6 +81,26 @@ The scanner writes:
 - `agentsec-report.json`
 - `agentsec-report.sarif`
 
+## SaaS API
+
+Run the API skeleton locally:
+
+```powershell
+python -m pip install -r requirements-server.txt
+uvicorn server.app:app --reload
+```
+
+Endpoints:
+
+- `GET /healthz`
+- `POST /api/scans`
+- `POST /api/audit-requests`
+- `GET /api/pricing`
+
+## Mobile PWA
+
+The landing page includes a web app manifest and service worker in `site/`. Install it from Chrome mobile after opening the GitHub Pages URL.
+
 ## MVP monetization path
 
 Use the free CLI to attract developers, publish public scans of trending AI-agent repos, then sell paid audits and SaaS subscriptions for teams deploying Claude, Cursor, Kilo, OpenAI, and MCP-based agents.

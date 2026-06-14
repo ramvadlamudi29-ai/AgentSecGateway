@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AgentSec Gateway | AI Agent Security Audits</title>
+  <meta name="theme-color" content="#7c5cff">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -103,5 +105,10 @@
     <p>AgentSec Gateway MVP. Built for AI agent security, MCP governance, and paid audits.</p>
   </footer>
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
 </body>
 </html>
