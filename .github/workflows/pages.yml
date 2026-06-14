@@ -24,7 +24,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages --depth=1 || true
           git checkout -B gh-pages
-          find . -mindepth 1 ! -name .git -delete
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name _site -exec rm -rf {} +
           cp -R _site/. .
           touch .nojekyll
           git add .
