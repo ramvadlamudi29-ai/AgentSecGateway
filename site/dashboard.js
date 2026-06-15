@@ -149,11 +149,52 @@ function runApiScan() {
   })
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`Scan upload failed: ${response.status}`)))
     .then(data => {
-      status.textContent = `Remote scan queued: ${data.scan_id}`;
+      status.textContent = `Remote scan queued: ${data.scan_id}. Polling status...`;
+      pollScanStatus(apiBase, token, data.scan_id);
     })
     .catch(error => {
       status.textContent = error.message;
     });
+}
+
+function pollScanStatus(apiBase, token, scanId) {
+  const status = document.getElementById('apiScanStatus');
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (attempts > 30) {
+      clearInterval(interval);
+      status.textContent = `Polling timed out for scan ${scanId}.`;
+      return;
+    }
+    fetch(`${apiBase}/api/scans/${scanId}`, {
+      headers: { 'X-AgentSec-Token': token }
+    })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error(`Fetch scan status failed: ${response.status}`)))
+      .then(data => {
+        if (data.status === 'completed') {
+          clearInterval(interval);
+          status.textContent = `Remote scan completed successfully!`;
+          const report = data.report;
+          state.report = report;
+          state.scans = buildScansFromReport(report);
+          state.findings = normalizeFindings(report.findings || []);
+          state.categories = countBy(state.findings, 'category');
+          state.severities = countBy(state.findings, 'severity');
+          document.getElementById('reportStatus').textContent = `Loaded remote scan report from ${report.finished_at || 'just now'}.`;
+          renderAll();
+        } else if (data.status === 'failed') {
+          clearInterval(interval);
+          status.textContent = `Remote scan failed: ${data.error || 'unknown error'}`;
+        } else {
+          status.textContent = `Remote scan status: ${data.status} (attempt ${attempts}/30)...`;
+        }
+      })
+      .catch(error => {
+        clearInterval(interval);
+        status.textContent = error.message;
+      });
+  }, 2000);
 }
 
 function compareReports() {

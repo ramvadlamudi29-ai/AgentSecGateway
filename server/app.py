@@ -13,6 +13,7 @@ import zipfile
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -28,6 +29,13 @@ SESSION_HOURS = int(os.environ.get("AGENTSEC_SESSION_HOURS", "12"))
 executor = ThreadPoolExecutor(max_workers=2)
 
 app = FastAPI(title="AgentSec Gateway API", version="0.3.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.state.limiter = Limiter(key_func=get_remote_address)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
