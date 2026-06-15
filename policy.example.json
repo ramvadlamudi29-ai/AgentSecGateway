@@ -1,9 +1,0 @@
-{
-  "ignore_rules": [],
-  "exclude_paths": [
-    "node_modules",
-    "dist",
-    "build",
-    ".venv"
-  ]
-}

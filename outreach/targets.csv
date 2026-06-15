@@ -1,6 +1,0 @@
-segment,signal,example_repos,angle,next_action
-AI engineering teams,Claude Code and Cursor mentions,shareAI-lab/learn-claude-code; sandiiarov/skill-creator; nextlevelbuilder/ui-ux-pro-max-skill,Agent skills need security review before production,Send LinkedIn DM and offer free mini audit
-MCP platform teams,MCP servers and integrations,cloudflare/mcp; ChromeDevTools/chrome-devtools-mcp; automateyournetwork/netclaw,MCP permissions can become over-privileged,Send security checklist and paid audit offer
-AI infrastructure teams,Agent frameworks and LLM infra,pydantic/pydantic-ai; chroma-core/chroma; langchain-ai/open-swe,Agent frameworks need CI security gates,Send repo scan report offer
-DevSecOps teams,Security and governance keywords,microsoft/agent-governance-toolkit; aisecuritygateway/aisecuritygateway; secuditor/secuditor-lite,Existing security teams understand agent risk,Send enterprise audit proposal
-Open-source maintainers,High-star AI repos with agent keywords,open-webui/open-webui; LocalAI; nomic-ai/gpt4all,Open-source projects can adopt scanner in CI,Send contributor-friendly PR or issue comment
