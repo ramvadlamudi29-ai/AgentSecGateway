@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#7c5cff">
+  <title>AgentSec Dashboard</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">AgentSec</div>
+    <nav>
+      <a href="index.html">Landing</a>
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <a href="#scans">Scans</a>
+      <a href="#risks">Risks</a>
+      <a href="#billing">Billing</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <header>
+      <div>
+        <p class="eyebrow">SaaS dashboard prototype</p>
+        <h1>AgentSec Gateway Dashboard</h1>
+      </div>
+      <button id="seedDemo">Load demo data</button>
+    </header>
+
+    <section class="cards">
+      <article><span>Risk score</span><strong id="riskScore">0</strong></article>
+      <article><span>Repos scanned</span><strong id="repoCount">0</strong></article>
+      <article><span>Critical findings</span><strong id="criticalCount">0</strong></article>
+      <article><span>Audit requests</span><strong id="auditCount">0</strong></article>
+    </section>
+
+    <section id="scans" class="panel">
+      <h2>Recent scans</h2>
+      <div id="scanTable"></div>
+    </section>
+
+    <section id="risks" class="panel">
+      <h2>Risk trend</h2>
+      <canvas id="riskChart" width="900" height="260"></canvas>
+    </section>
+
+    <section id="billing" class="panel">
+      <h2>Billing status</h2>
+      <div class="billing-grid">
+        <div><span>Plan</span><strong>Team Pilot</strong></div>
+        <div><span>Monthly recurring revenue</span><strong id="mrr">$0</strong></div>
+        <div><span>Next invoice</span><strong>$499</strong></div>
+      </div>
+    </section>
+  </main>
+  <script src="dashboard.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>

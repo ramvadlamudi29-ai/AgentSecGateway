@@ -19,7 +19,7 @@ Use the GitHub Pages domain above. No custom domain is required.
    - `A` record `@` to `185.199.110.153`
    - `A` record `@` to `185.199.111.153`
    - `CNAME` record `www` to `ramvadlamudi29-ai.github.io`
-3. Create `site/CNAME` with the domain name, for example:
+3. Copy `site/CNAME.example` to `site/CNAME` and replace the placeholder domain:
    ```text
    agentsecgateway.com
    ```

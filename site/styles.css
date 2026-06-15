@@ -50,6 +50,14 @@ textarea { min-height: 110px; resize: vertical; }
 .amount { font-size: 2.6rem; font-weight: 900; letter-spacing: -.05em; margin: 8px 0; }
 .price.featured { border-color: rgba(36,214,168,.55); transform: translateY(-8px); box-shadow: 0 24px 70px rgba(36,214,168,.12); }
 .faq { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.install-prompt { position: fixed; left: 50%; bottom: 24px; z-index: 100; width: min(520px, calc(100% - 32px)); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid rgba(36,214,168,.35); border-radius: 22px; background: rgba(13,20,36,.96); box-shadow: 0 24px 80px rgba(0,0,0,.45); transform: translate(-50%, 120%); opacity: 0; transition: transform .25s ease, opacity .25s ease; }
+.install-prompt.show { transform: translate(-50%, 0); opacity: 1; }
+.install-prompt strong { display: block; }
+.install-prompt span { display: block; color: var(--muted); margin-top: 2px; }
+.install-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.install-prompt button { border: 0; border-radius: 12px; padding: 10px 14px; font: inherit; font-weight: 800; cursor: pointer; }
+.install-prompt .primary { background: var(--accent-2); color: #04110d; }
+.install-prompt .secondary { background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--border); }
 footer { padding: 34px clamp(20px, 6vw, 80px); color: var(--muted); border-top: 1px solid var(--border); }
 
 @media (max-width: 900px) {
@@ -58,4 +66,10 @@ footer { padding: 34px clamp(20px, 6vw, 80px); color: var(--muted); border-top: 
   nav { align-items: flex-start; flex-direction: column; }
   .nav-links { flex-wrap: wrap; }
   .panel { max-width: 460px; }
+}
+
+@media (max-width: 640px) {
+  .install-prompt { align-items: stretch; flex-direction: column; }
+  .install-actions { width: 100%; }
+  .install-actions button { flex: 1; }
 }

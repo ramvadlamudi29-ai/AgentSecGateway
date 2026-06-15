@@ -2,9 +2,14 @@ const CACHE_NAME = 'agentsec-gateway-v1';
 const ASSETS = [
   './',
   './index.html',
+  './dashboard.html',
   './styles.css',
+  './dashboard.css',
   './app.js',
-  './manifest.webmanifest'
+  './dashboard.js',
+  './install-prompt.js',
+  './manifest.webmanifest',
+  './icon.svg'
 ];
 
 self.addEventListener('install', event => {
