@@ -8,6 +8,8 @@ const demoScans = [
 const state = {
   scans: demoScans,
   report: null,
+  baseline: null,
+  diff: null,
   findings: [],
   categories: {},
   severities: { critical: 0, high: 0, medium: 0, low: 0 }
@@ -16,14 +18,31 @@ const state = {
 function init() {
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('reportFile');
+  const baselineInput = document.getElementById('baselineFile');
+
+  document.getElementById('apiBase').value = localStorage.getItem('agentsec-api-base') || 'http://127.0.0.1:8000';
+  document.getElementById('apiToken').value = localStorage.getItem('agentsec-api-token') || '';
+  renderAuthState();
+
+  document.getElementById('connectApi').addEventListener('click', connectApi);
+  document.getElementById('clearApi').addEventListener('click', () => {
+    localStorage.removeItem('agentsec-api-token');
+    document.getElementById('apiToken').value = '';
+    renderAuthState();
+  });
+  document.getElementById('runApiScan').addEventListener('click', runApiScan);
+  document.getElementById('compareReports').addEventListener('click', compareReports);
 
   document.getElementById('seedDemo').addEventListener('click', () => {
     state.report = null;
+    state.baseline = null;
+    state.diff = null;
     state.findings = [];
     state.categories = {};
     state.severities = { critical: 0, high: 0, medium: 0, low: 0 };
     state.scans = demoScans;
     document.getElementById('reportStatus').textContent = 'No report loaded. Demo data is active.';
+    renderDiff();
     renderAll();
   });
 
@@ -42,6 +61,10 @@ function init() {
   fileInput.addEventListener('change', event => {
     const file = event.target.files[0];
     if (file) loadReport(file);
+  });
+  baselineInput.addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (file) loadBaseline(file);
   });
 
   renderAll();
@@ -64,6 +87,138 @@ function loadReport(file) {
     }
   };
   reader.readAsText(file);
+}
+
+function loadBaseline(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      state.baseline = JSON.parse(reader.result);
+      document.getElementById('reportStatus').textContent = `Loaded baseline ${file.name}. Press Compare baseline to view changes.`;
+    } catch (error) {
+      document.getElementById('reportStatus').textContent = `Could not parse baseline JSON: ${error.message}`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function connectApi() {
+  const apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+  const token = document.getElementById('apiToken').value.trim();
+  localStorage.setItem('agentsec-api-base', apiBase);
+  if (!token) {
+    document.getElementById('authStatus').textContent = 'Enter an AgentSec token before connecting.';
+    return;
+  }
+  fetch(`${apiBase}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-AgentSec-Token': token },
+    body: JSON.stringify({ token, duration_hours: 12 })
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`Auth failed: ${response.status}`)))
+    .then(data => {
+      localStorage.setItem('agentsec-api-token', data.session_token);
+      renderAuthState();
+    })
+    .catch(error => {
+      document.getElementById('authStatus').textContent = `${error.message}. Demo mode remains active.`;
+    });
+}
+
+function renderAuthState() {
+  const token = localStorage.getItem('agentsec-api-token');
+  document.getElementById('authStatus').textContent = token ? 'Dashboard connected with an active API session.' : 'Demo mode is active. Connect the API to run remote scans.';
+}
+
+function runApiScan() {
+  const apiBase = document.getElementById('apiBase').value.replace(/\/$/, '');
+  const token = localStorage.getItem('agentsec-api-token');
+  const fileInput = document.getElementById('apiScanFile');
+  const status = document.getElementById('apiScanStatus');
+  if (!token || !fileInput.files.length) {
+    status.textContent = 'Connect the API and choose at least one file first.';
+    return;
+  }
+  const form = new FormData();
+  Array.from(fileInput.files).forEach(file => form.append('files', file));
+  status.textContent = 'Uploading scan files...';
+  fetch(`${apiBase}/api/scans`, {
+    method: 'POST',
+    headers: { 'X-AgentSec-Token': token },
+    body: form
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`Scan upload failed: ${response.status}`)))
+    .then(data => {
+      status.textContent = `Remote scan queued: ${data.scan_id}`;
+    })
+    .catch(error => {
+      status.textContent = error.message;
+    });
+}
+
+function compareReports() {
+  if (!state.report || !state.baseline) {
+    document.getElementById('reportStatus').textContent = 'Load both a current report and a baseline report first.';
+    return;
+  }
+  state.diff = diffReports(state.baseline, state.report);
+  renderDiff();
+  document.getElementById('reportStatus').textContent = `Compared ${state.baseline.target || 'baseline'} with ${state.report.target || 'current report'}.`;
+}
+
+function diffReports(baseline, current) {
+  const before = new Map((baseline.findings || []).map(finding => [findingKey(finding), finding]));
+  const after = new Map((current.findings || []).map(finding => [findingKey(finding), finding]));
+  const added = [];
+  const removed = [];
+  let unchanged = 0;
+  for (const [key, finding] of after.entries()) {
+    if (before.has(key)) unchanged += 1; else added.push(finding);
+  }
+  for (const [key, finding] of before.entries()) {
+    if (!after.has(key)) removed.push(finding);
+  }
+  return { added, removed, unchanged };
+}
+
+function renderDiff() {
+  const diff = state.diff;
+  const summary = document.getElementById('diffSummary');
+  if (!diff) {
+    summary.innerHTML = '';
+    return;
+  }
+  summary.innerHTML = `
+    <div class="diff-pill"><span>Added</span><strong>${diff.added.length}</strong></div>
+    <div class="diff-pill"><span>Removed</span><strong>${diff.removed.length}</strong></div>
+    <div class="diff-pill"><span>Unchanged</span><strong>${diff.unchanged}</strong></div>
+  `;
+  const list = document.getElementById('findingList');
+  if (diff.added.length) {
+    list.insertAdjacentHTML('afterbegin', '<h3 class="diff-heading">Added findings</h3>' + diff.added.map(finding => findingCard(finding)).join(''));
+  }
+  if (diff.removed.length) {
+    list.insertAdjacentHTML('afterbegin', '<h3 class="diff-heading">Removed findings</h3>' + diff.removed.map(finding => findingCard(finding, true)).join(''));
+  }
+}
+
+function findingCard(finding, removed = false) {
+  return `
+    <article class="finding-card">
+      <header>
+        <div>
+          <h3>${removed ? 'Removed' : 'Added'}: ${escapeHtml(finding.title)}</h3>
+          <div class="finding-meta">${escapeHtml(finding.category)} · ${escapeHtml(finding.file)}:${finding.line}</div>
+        </div>
+        <span class="badge ${finding.severity}">${escapeHtml(finding.severity)}</span>
+      </header>
+      <code>${escapeHtml(finding.snippet || finding.evidence || finding.message)}</code>
+    </article>
+  `;
+}
+
+function findingKey(finding) {
+  return [finding.rule_id, finding.file, finding.line, finding.severity, finding.title].join('|');
 }
 
 function buildScansFromReport(report) {

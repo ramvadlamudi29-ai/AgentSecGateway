@@ -38,7 +38,32 @@
         <span>or choose a file from your device</span>
         <input id="reportFile" type="file" accept="application/json,.json">
       </div>
+      <div class="compare-row">
+        <label>Baseline report<input id="baselineFile" type="file" accept="application/json,.json"></label>
+        <button id="compareReports" type="button">Compare baseline</button>
+      </div>
+      <div id="diffSummary" class="diff-summary"></div>
       <p id="reportStatus" class="report-status">No report loaded. Demo data is active.</p>
+    </section>
+
+    <section class="panel auth-panel">
+      <h2>API access</h2>
+      <div class="auth-grid">
+        <label>API base URL<input id="apiBase" placeholder="http://127.0.0.1:8000"></label>
+        <label>AgentSec token<input id="apiToken" type="password" placeholder="Paste X-AgentSec-Token"></label>
+        <button id="connectApi" type="button">Connect dashboard</button>
+        <button id="clearApi" class="secondary" type="button">Demo mode</button>
+      </div>
+      <p id="authStatus" class="report-status">Demo mode is active. Connect the API to run remote scans.</p>
+    </section>
+
+    <section class="panel api-scan-panel">
+      <h2>Remote API scan</h2>
+      <div class="api-scan-row">
+        <input id="apiScanFile" type="file" multiple>
+        <button id="runApiScan" type="button">Upload and scan</button>
+      </div>
+      <p id="apiScanStatus" class="report-status">No remote scan started.</p>
     </section>
 
     <section class="cards">

@@ -521,3 +521,37 @@ Validation:
 - FastAPI upload/list/get smoke test: passed
 - Local browser checks on http://127.0.0.1:8080/: landing loads, dashboard renders demo data, drop zone exists, charts exist
 
+27. Production hardening work completed after enterprise upgrades
+Files changed:
+- site/dashboard.html
+- site/dashboard.css
+- site/dashboard.js
+- server/app.py
+- docker-compose.yml
+- server/Dockerfile
+- .github/workflows/ci.yml
+- PWA_QA_CHECKLIST.md
+- WORK_DONE_SUMMARY.txt
+
+Work done:
+- Added dashboard API access panel with API base URL and AgentSec token inputs.
+- Added frontend session handling using localStorage.
+- Added FastAPI /api/auth/login, /api/auth/logout, and /api/auth/me endpoints.
+- Added SQLite sessions table and session-token validation.
+- Updated /api/scans endpoints to accept session tokens or master token.
+- Added dashboard baseline report upload and Compare baseline diff view.
+- Added added/removed/unchanged finding diff counts and finding cards.
+- Added remote API scan upload button using the authenticated session token.
+- Added CI workflow for Python tests, compile checks, JS syntax checks, manifest validation, and server import.
+- Updated Docker Compose with API environment, reports volume, and healthcheck.
+- Updated server Dockerfile to include package metadata and agentsec_scan source.
+- Added PWA_QA_CHECKLIST.md for mobile install, dashboard, API scan, and offline testing.
+
+Validation:
+- python -m unittest discover -s tests: 7 tests OK
+- python -m compileall agentsec_scan server tests: passed
+- node --check site/app.js site/install-prompt.js site/sw.js site/dashboard.js: passed
+- python -m json.tool site/manifest.webmanifest: passed
+- FastAPI auth/session/upload/get smoke test: passed
+- Local browser check with cache bust: dashboard auth panel, baseline file input, API base input, API scan input, and diff summary exist
+

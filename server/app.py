@@ -1,9 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import io
 import json
 import os
 from pathlib import Path
+import secrets
 import shutil
 import sqlite3
 import tempfile
@@ -23,9 +24,10 @@ from agentsec_scan.scanner import AgentSecScanner
 REPORTS_DIR = Path(os.environ.get("AGENTSEC_REPORTS_DIR", "reports")).resolve()
 DB_PATH = REPORTS_DIR / "reports.db"
 EXPECTED_TOKEN = os.environ.get("AGENTSEC_TOKEN", "dev-agentsec-token")
+SESSION_HOURS = int(os.environ.get("AGENTSEC_SESSION_HOURS", "12"))
 executor = ThreadPoolExecutor(max_workers=2)
 
-app = FastAPI(title="AgentSec Gateway API", version="0.2.0")
+app = FastAPI(title="AgentSec Gateway API", version="0.3.0")
 app.state.limiter = Limiter(key_func=get_remote_address)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -53,6 +55,16 @@ class AuditRequest(BaseModel):
     message: str
 
 
+class LoginRequest(BaseModel):
+    token: str
+    duration_hours: int = SESSION_HOURS
+
+
+class LoginResponse(BaseModel):
+    session_token: str
+    expires_at: str
+
+
 def init_db() -> None:
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
@@ -71,20 +83,77 @@ def init_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (datetime.now(timezone.utc).isoformat(),))
         conn.commit()
+
+
+def validate_master_token(token: str | None) -> bool:
+    return bool(token and token == EXPECTED_TOKEN)
+
+
+def require_access(token: str | None) -> None:
+    if validate_master_token(token):
+        return
+    with sqlite3.connect(DB_PATH) as conn:
+        row = conn.execute("SELECT token FROM sessions WHERE token = ? AND expires_at > ?", (token, datetime.now(timezone.utc).isoformat())).fetchone()
+    if row is None:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-AgentSec-Token")
+
+
+def create_session(duration_hours: int) -> LoginResponse:
+    token = secrets.token_urlsafe(32)
+    created_at = datetime.now(timezone.utc)
+    expires_at = created_at + timedelta(hours=duration_hours)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("INSERT INTO sessions (token, created_at, expires_at) VALUES (?, ?, ?)", (token, created_at.isoformat(), expires_at.isoformat()))
+        conn.commit()
+    return LoginResponse(session_token=token, expires_at=expires_at.isoformat())
+
+
+def auth_header(x_agentsec_token: str | None) -> str | None:
+    return x_agentsec_token
 
 
 init_db()
 
 
-def validate_token(token: str) -> None:
-    if token != EXPECTED_TOKEN:
-        raise HTTPException(status_code=401, detail="Invalid or missing X-AgentSec-Token")
-
-
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/api/auth/login", response_model=LoginResponse)
+@app.state.limiter.limit("5/minute")
+def login(request: Request, payload: LoginRequest, x_agentsec_token: str | None = Header(None)) -> LoginResponse:
+    if not validate_master_token(x_agentsec_token):
+        raise HTTPException(status_code=401, detail="Invalid or missing X-AgentSec-Token")
+    return create_session(max(1, min(payload.duration_hours, 24)))
+
+
+@app.post("/api/auth/logout")
+@app.state.limiter.limit("10/minute")
+def logout(request: Request, x_agentsec_token: str | None = Header(None)) -> dict[str, str]:
+    require_access(x_agentsec_token)
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM sessions WHERE token = ?", (x_agentsec_token,))
+        conn.commit()
+    return {"status": "logged_out"}
+
+
+@app.get("/api/auth/me")
+@app.state.limiter.limit("30/minute")
+def auth_me(request: Request, x_agentsec_token: str | None = Header(None)) -> dict[str, Any]:
+    require_access(x_agentsec_token)
+    return {"authenticated": True, "expires_at": datetime.now(timezone.utc).isoformat()}
 
 
 @app.post("/api/scans")
@@ -94,9 +163,9 @@ async def create_scan(
     background_tasks: BackgroundTasks,
     files: list[UploadFile] | None = File(None),
     repository_zip: UploadFile | None = File(None),
-    x_agentsec_token: str = Header(...),
+    x_agentsec_token: str | None = Header(None),
 ) -> dict[str, Any]:
-    validate_token(x_agentsec_token)
+    require_access(x_agentsec_token)
     scan_id = uuid.uuid4().hex
     created_at = datetime.now(timezone.utc).isoformat()
     work_dir = tempfile.mkdtemp(prefix="agentsec-upload-")
@@ -125,8 +194,8 @@ async def create_scan(
 
 @app.get("/api/scans")
 @app.state.limiter.limit("30/minute")
-async def list_scans(request: Request, x_agentsec_token: str = Header(...)) -> dict[str, Any]:
-    validate_token(x_agentsec_token)
+async def list_scans(request: Request, x_agentsec_token: str | None = Header(None)) -> dict[str, Any]:
+    require_access(x_agentsec_token)
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT id, repo, status, risk_score, created_at, finished_at, error FROM scans ORDER BY created_at DESC LIMIT 50").fetchall()
@@ -135,8 +204,8 @@ async def list_scans(request: Request, x_agentsec_token: str = Header(...)) -> d
 
 @app.get("/api/scans/{scan_id}")
 @app.state.limiter.limit("30/minute")
-async def get_scan(request: Request, scan_id: str, x_agentsec_token: str = Header(...)) -> dict[str, Any]:
-    validate_token(x_agentsec_token)
+async def get_scan(request: Request, scan_id: str, x_agentsec_token: str | None = Header(None)) -> dict[str, Any]:
+    require_access(x_agentsec_token)
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT * FROM scans WHERE id = ?", (scan_id,)).fetchone()
@@ -151,8 +220,8 @@ async def get_scan(request: Request, scan_id: str, x_agentsec_token: str = Heade
 
 @app.post("/api/scans/legacy")
 @app.state.limiter.limit("5/minute")
-async def create_scan_payload(payload: ScanPayload, request: Request, x_agentsec_token: str = Header(...)) -> dict[str, Any]:
-    validate_token(x_agentsec_token)
+async def create_scan_payload(payload: ScanPayload, request: Request, x_agentsec_token: str | None = Header(None)) -> dict[str, Any]:
+    require_access(x_agentsec_token)
     counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
     for finding in payload.findings:
         counts[finding.severity] = counts.get(finding.severity, 0) + 1

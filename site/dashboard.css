@@ -59,6 +59,14 @@ button { border: 0; border-radius: 16px; padding: 13px 18px; background: linear-
 .drop-zone span { color: var(--muted); }
 .drop-zone input { display: none; }
 .report-status { color: var(--muted); margin: 14px 0 0; }
+.compare-row, .api-scan-row { display: flex; gap: 12px; align-items: end; margin-top: 14px; }
+.compare-row label, .api-scan-row input { flex: 1; }
+.diff-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+.diff-pill { border: 1px solid var(--border); border-radius: 16px; padding: 12px; background: rgba(255,255,255,.04); }
+.diff-pill strong { display: block; font-size: 1.4rem; }
+.auth-grid { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 12px; align-items: end; }
+.auth-grid label { gap: 6px; }
+.secondary { background: rgba(255,255,255,.08); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
 .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
 .cards article { padding: 22px; position: relative; overflow: hidden; }
 .cards article::after { content: ""; position: absolute; width: 120px; height: 120px; right: -40px; top: -40px; border-radius: 999px; background: rgba(0,255,136,.12); filter: blur(12px); }
@@ -80,6 +88,7 @@ canvas { width: 100%; height: 280px; background: rgba(7, 12, 22, 0.42); border: 
 .billing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .billing-grid span { color: var(--muted); display: block; margin-bottom: 8px; }
 .finding-list { display: grid; gap: 12px; }
+.diff-heading { margin: 0 0 4px; color: var(--emerald); }
 .finding-card { border: 1px solid var(--border); border-radius: 18px; padding: 14px; background: rgba(7, 12, 22, 0.48); }
 .finding-card header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin: 0 0 10px; }
 .finding-card h3 { margin: 0; font-size: 1rem; }
@@ -87,5 +96,5 @@ canvas { width: 100%; height: 280px; background: rgba(7, 12, 22, 0.42); border: 
 .finding-card code { display: block; white-space: pre-wrap; color: #d7e6ff; background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px; margin-top: 10px; }
 .finding-card input { width: auto; margin-right: 8px; }
 
-@media (max-width: 1100px) { body { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); } nav { grid-template-columns: repeat(3, 1fr); } .grid-two { grid-template-columns: 1fr; } }
-@media (max-width: 900px) { .main { padding: 22px; } header { flex-direction: column; } .cards, .billing-grid { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { body { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); } nav { grid-template-columns: repeat(3, 1fr); } .grid-two, .auth-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .main { padding: 22px; } header { flex-direction: column; } .cards, .billing-grid, .diff-summary { grid-template-columns: 1fr; } .compare-row, .api-scan-row { flex-direction: column; align-items: stretch; } .row { grid-template-columns: 1fr; } }
