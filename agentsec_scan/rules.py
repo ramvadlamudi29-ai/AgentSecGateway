@@ -7,6 +7,7 @@ RULES = [
     ("secret-openai-key", "critical", "secret", "OpenAI API key", r"sk-[A-Za-z0-9]{20,}"),
     ("secret-anthropic-key", "critical", "secret", "Anthropic API key", r"sk-ant-[A-Za-z0-9_-]{20,}"),
     ("secret-slack-token", "critical", "secret", "Slack token", r"xox[baprs]-[A-Za-z0-9-]{10,}"),
+    ("secret-high-entropy", "high", "secret", "High entropy secret candidate", r"(?i)\b(api[_-]?key|secret|token|password|passwd|pwd|private[_-]?key|access[_-]?key)\b\s*[:=]\s*['\"]?([^'\"\s,}]{17,})"),
     ("secret-generic", "high", "secret", "Generic secret assignment", r"(?i)\b(api[_-]?key|secret|token|password|passwd|pwd)\b\s*[:=]\s*['\"]?[^'\"\s]+"),
     ("prompt-ignore-instructions", "high", "prompt-injection", "Instruction override", r"(?i)ignore (all )?(previous|prior) instructions|disregard (all )?(previous|prior) instructions|system prompt|developer instructions|reveal your instructions"),
     ("prompt-jailbreak", "high", "prompt-injection", "Jailbreak pattern", r"(?i)jailbreak|bypass safety|bypass restrictions|do not follow|override your rules"),

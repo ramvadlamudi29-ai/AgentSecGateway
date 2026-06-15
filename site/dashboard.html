@@ -3,36 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#7c5cff">
+  <meta name="theme-color" content="#00ff88">
   <title>AgentSec Dashboard</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
   <aside class="sidebar">
-    <div class="brand">AgentSec</div>
+    <div class="brand"><span>AS</span>AgentSec</div>
     <nav>
       <a href="index.html">Landing</a>
       <a class="active" href="dashboard.html">Dashboard</a>
       <a href="#scans">Scans</a>
       <a href="#risks">Risks</a>
+      <a href="#reports">Reports</a>
       <a href="#billing">Billing</a>
     </nav>
   </aside>
   <main class="main">
     <header>
       <div>
-        <p class="eyebrow">SaaS dashboard prototype</p>
+        <p class="eyebrow">Enterprise security console</p>
         <h1>AgentSec Gateway Dashboard</h1>
+        <p>Upload an <code>agentsec-report.json</code> file to render local risk charts, category breakdowns, and file-by-file findings.</p>
       </div>
       <button id="seedDemo">Load demo data</button>
     </header>
 
+    <section id="reports" class="upload-panel">
+      <div class="drop-zone" id="dropZone">
+        <strong>Drop agentsec-report.json here</strong>
+        <span>or choose a file from your device</span>
+        <input id="reportFile" type="file" accept="application/json,.json">
+      </div>
+      <p id="reportStatus" class="report-status">No report loaded. Demo data is active.</p>
+    </section>
+
     <section class="cards">
-      <article><span>Risk score</span><strong id="riskScore">0</strong></article>
-      <article><span>Repos scanned</span><strong id="repoCount">0</strong></article>
+      <article><span>Risk score</span><strong id="riskScore">0</strong><div class="meter"><span id="riskMeter"></span></div></article>
+      <article><span>Files scanned</span><strong id="filesScanned">0</strong></article>
+      <article><span>Findings</span><strong id="findingCount">0</strong></article>
       <article><span>Critical findings</span><strong id="criticalCount">0</strong></article>
-      <article><span>Audit requests</span><strong id="auditCount">0</strong></article>
+    </section>
+
+    <section id="risks" class="grid-two">
+      <div class="panel">
+        <h2>Risk trend</h2>
+        <canvas id="riskChart" width="900" height="280"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Category breakdown</h2>
+        <canvas id="categoryChart" width="720" height="280"></canvas>
+      </div>
     </section>
 
     <section id="scans" class="panel">
@@ -40,9 +64,9 @@
       <div id="scanTable"></div>
     </section>
 
-    <section id="risks" class="panel">
-      <h2>Risk trend</h2>
-      <canvas id="riskChart" width="900" height="260"></canvas>
+    <section class="panel">
+      <h2>File findings</h2>
+      <div id="findingList" class="finding-list"></div>
     </section>
 
     <section id="billing" class="panel">

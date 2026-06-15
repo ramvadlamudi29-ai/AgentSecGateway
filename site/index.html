@@ -4,17 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AgentSec Gateway | AI Agent Security Audits</title>
-  <meta name="theme-color" content="#7c5cff">
+  <meta name="theme-color" content="#00ff88">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="hero">
-    <nav>
-      <a class="logo" href="#top">AgentSec Gateway</a>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <header class="hero" id="top">
+    <nav class="nav-shell">
+      <a class="logo" href="#top"><span class="logo-mark">AS</span>AgentSec Gateway</a>
       <div class="nav-links">
-        <a href="#problem">Problem</a>
-        <a href="dashboard.html">Dashboard</a>
+        <a href="#problem">Threats</a>
+        <a href="dashboard.html">Live Dashboard</a>
         <a href="#audit">Audit</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
@@ -24,28 +26,39 @@
       <div>
         <p class="eyebrow">AI Agent Security + MCP Governance</p>
         <h1>Ship Claude, Cursor, Kilo, and MCP agents without security surprises.</h1>
-        <p class="lead">We scan agent skills, MCP servers, prompts, tool permissions, secrets, and CI workflows for prompt injection, data exfiltration, over-permissioned tools, and supply-chain risks.</p>
+        <p class="lead">AgentSec Gateway scans agent skills, MCP servers, prompts, tool permissions, secrets, and CI workflows for prompt injection, data exfiltration, over-permissioned tools, and supply-chain risks.</p>
         <div class="actions">
           <a class="button primary" href="#audit">Get a paid audit</a>
           <a class="button secondary" href="https://github.com/ramvadlamudi29-ai/AgentSecGateway" target="_blank" rel="noreferrer">View open-source scanner</a>
         </div>
+        <div class="trust-row">
+          <span>AST-aware Python checks</span>
+          <span>Entropy secret detection</span>
+          <span>Local PWA dashboard</span>
+        </div>
       </div>
-      <div class="panel">
+      <aside class="panel risk-panel">
         <div class="panel-header">
           <span>Risk Report</span>
           <strong>100/100</strong>
         </div>
+        <div class="risk-meter"><span style="width: 100%"></span></div>
         <div class="metric"><span>Critical</span><b>4</b></div>
         <div class="metric"><span>High</span><b>1</b></div>
         <div class="metric"><span>Medium</span><b>3</b></div>
         <div class="metric"><span>Low</span><b>1</b></div>
-      </div>
+        <p class="panel-note">Upload <code>agentsec-report.json</code> in the dashboard to visualize real scan results locally.</p>
+      </aside>
     </div>
   </header>
 
   <main>
     <section id="problem" class="section">
-      <h2>The new risk surface</h2>
+      <div class="section-heading">
+        <p class="eyebrow">Threat surface</p>
+        <h2>The new AI agent attack surface</h2>
+        <p>Agents combine natural language, tools, repositories, secrets, and network access. AgentSec Gateway turns that surface into reviewable findings.</p>
+      </div>
       <div class="cards">
         <article><h3>Prompt injection</h3><p>Agents can be tricked into revealing instructions, ignoring policy, or sending sensitive data to external endpoints.</p></article>
         <article><h3>MCP over-permissions</h3><p>MCP tools often get broad file, shell, database, and network access without least-privilege review.</p></article>
@@ -55,9 +68,12 @@
     </section>
 
     <section id="audit" class="section dark">
-      <h2>Paid audit package</h2>
+      <div class="section-heading">
+        <p class="eyebrow">Paid audit package</p>
+        <h2>Enterprise-ready agent security review</h2>
+      </div>
       <div class="audit-grid">
-        <div>
+        <div class="panel">
           <h3>What we audit</h3>
           <ul>
             <li>Claude Skills, Cursor skills, Kilo workflows, OpenAI agent prompts</li>
@@ -67,7 +83,7 @@
             <li>GitHub Actions, Dockerfiles, dependency manifests, CI/CD risk</li>
           </ul>
         </div>
-        <form class="audit-form">
+        <form class="audit-form panel">
           <label>Name<input name="name" placeholder="Your name" required></label>
           <label>Email<input name="email" type="email" placeholder="you@company.com" required></label>
           <label>Company<input name="company" placeholder="Company name"></label>
@@ -84,7 +100,10 @@
     </section>
 
     <section id="pricing" class="section">
-      <h2>Pricing</h2>
+      <div class="section-heading">
+        <p class="eyebrow">Pricing</p>
+        <h2>Choose the right review depth</h2>
+      </div>
       <div class="pricing">
         <article class="price"><h3>Starter</h3><p class="amount">$299</p><p>One repo or one agent skill pack.</p><ul><li>Automated scan</li><li>Markdown report</li><li>Priority findings summary</li></ul></article>
         <article class="price featured"><h3>Team</h3><p class="amount">$999</p><p>Up to 5 repos or agent workflows.</p><ul><li>Automated scan</li><li>Manual review</li><li>Remediation plan</li><li>30-minute call</li></ul></article>
@@ -93,7 +112,10 @@
     </section>
 
     <section id="faq" class="section dark">
-      <h2>FAQ</h2>
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Questions before you ship agents</h2>
+      </div>
       <div class="faq">
         <div><h3>Is this only for security teams?</h3><p>No. It is built for engineering teams shipping AI agents with real tools and real data access.</p></div>
         <div><h3>Can this scan private repos?</h3><p>Yes. Private audits can be run locally or through a private CI job. Do not send private code to unknown services.</p></div>

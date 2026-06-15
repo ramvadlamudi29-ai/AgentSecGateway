@@ -72,12 +72,35 @@ def finding_markdown(f: Finding) -> list[str]:
         f"- Rule: `{f.rule_id}`",
         f"- Category: `{f.category}`",
         f"- Location: `{f.file}:{f.line}`",
+        f"- Remediation: {remediation_for(f)}",
         "",
         "```text",
         f"{html.unescape(f.snippet)}",
         "```",
         "",
     ]
+
+
+def remediation_for(finding: Finding) -> str:
+    if finding.rule_id.startswith("secret"):
+        return "Rotate the credential, remove it from source control, store it in a secrets manager, and restrict repository/CI access."
+    if finding.category == "prompt-injection":
+        return "Reject instruction override attempts, enforce policy at the tool layer, and keep agent prompts out of untrusted user-controlled input."
+    if finding.category == "data-exfiltration":
+        return "Block outbound data transfers for sensitive values, require allowlisted webhook destinations, and add DLP checks before network calls."
+    if finding.category == "dangerous-command":
+        return "Remove destructive or remote execution patterns, require explicit approval for shell commands, and run agents in least-privilege sandboxes."
+    if finding.category == "sensitive-file":
+        return "Scope file access to required paths only, avoid broad reads, and deny access to .env, SSH keys, credentials, and kubeconfig files."
+    if finding.category == "mcp-permissions":
+        return "Apply least-privilege MCP permissions, separate read and write tools, and require explicit allowlists for shell/database/network access."
+    if finding.category == "supply-chain":
+        return "Pin dependencies, review install scripts, avoid eval/child-process execution, and scan dependency manifests before deployment."
+    if finding.category == "vulnerability":
+        return "Validate exploit references, patch affected components, and track CVEs through the remediation workflow."
+    if finding.category == "agent-security":
+        return "Review agent tool permissions, document allowed tools, and add policy checks before granting new capabilities."
+    return "Review the finding and apply the least-privilege remediation for the affected component."
 
 
 def sarif_report(result: ScanResult) -> dict:
@@ -90,7 +113,7 @@ def sarif_report(result: ScanResult) -> dict:
                 "name": finding.title,
                 "shortDescription": {"text": finding.title},
                 "fullDescription": {"text": finding.message},
-                "properties": {"category": finding.category, "defaultSeverity": finding.severity},
+                "properties": {"category": finding.category, "defaultSeverity": finding.severity, "remediation": remediation_for(finding)},
             })
         results.append({
             "ruleId": finding.rule_id,

@@ -1,10 +1,18 @@
+import ast
+import math
 import os
 import re
+from collections import Counter
 from pathlib import Path
 
 from .models import Finding, ScanResult, now_iso
 from .policy import Policy
 from .rules import RULES, SKIP_DIRS, TEXT_EXTENSIONS
+
+SECRET_NAMES = {"api_key", "apikey", "secret", "token", "password", "passwd", "pwd", "private_key", "access_key"}
+NETWORK_MODULES = {"requests", "httpx", "urllib", "aiohttp"}
+NETWORK_METHODS = {"get", "post", "put", "patch", "delete", "request", "head", "options", "send"}
+FILESYSTEM_NAMES = {"open", "read_text", "write_text", "read_bytes", "write_bytes"}
 
 
 class AgentSecScanner:
@@ -56,12 +64,115 @@ class AgentSecScanner:
     def _scan_text(self, content: str, rel: str) -> list[Finding]:
         findings: list[Finding] = []
         lines = content.splitlines() or [""]
+        python_context = self._python_secret_context(content) if rel.lower().endswith(".py") else {}
         for rule_id, severity, category, title, pattern in self._compiled_rules:
             for match in pattern.finditer(content):
                 line, snippet = self._line_and_snippet(lines, match.start())
-                findings.append(Finding(severity=severity, rule_id=rule_id, title=title, message=self._message(rule_id, rel, line), category=category, file=rel, line=line, snippet=snippet, evidence=match.group(0)[:240]))
+                evidence = match.group(0)[:240]
+                finding = Finding(severity=severity, rule_id=rule_id, title=title, message=self._message(rule_id, rel, line), category=category, file=rel, line=line, snippet=snippet, evidence=evidence)
+                findings.append(self._with_context(finding, python_context))
         findings.extend(self._agent_context_findings(content, rel, lines))
         return findings
+
+    def _with_context(self, finding: Finding, context: dict[str, dict]) -> Finding:
+        if finding.category != "secret" or not context:
+            return finding
+        variable = self._variable_from_evidence(finding.evidence)
+        if variable not in context:
+            return finding
+        sink_calls = context[variable].get("sink_calls", [])
+        if sink_calls:
+            return Finding(
+                severity=finding.severity,
+                rule_id=finding.rule_id,
+                title=finding.title,
+                message=f"{finding.rule_id} detected in {finding.file}:{finding.line}; credential variable '{variable}' is passed to {', '.join(sink_calls)}.",
+                category=finding.category,
+                file=finding.file,
+                line=finding.line,
+                snippet=finding.snippet,
+                evidence=finding.evidence
+            )
+        if finding.rule_id == "secret-high-entropy":
+            return Finding(
+                severity="medium",
+                rule_id=finding.rule_id,
+                title=finding.title,
+                message=f"{finding.rule_id} detected in {finding.file}:{finding.line}; credential variable '{variable}' is assigned but not observed in a network or filesystem sink.",
+                category=finding.category,
+                file=finding.file,
+                line=finding.line,
+                snippet=finding.snippet,
+                evidence=finding.evidence
+            )
+        return finding
+
+    def _python_secret_context(self, content: str) -> dict[str, dict]:
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            return {}
+        context = {name: {"sink_calls": []} for name, _value, _entropy in self._assigned_python_secrets(tree)}
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            call_name = self._call_name(node)
+            if not self._is_sensitive_call(call_name):
+                continue
+            sink = call_name
+            for arg in [*node.args, *(keyword.value for keyword in node.keywords if keyword.value is not None)]:
+                for name in self._names_in_expr(arg):
+                    if name in context:
+                        context[name]["sink_calls"].append(sink)
+        return context
+
+    def _assigned_python_secrets(self, tree: ast.AST) -> list[tuple[str, str, float]]:
+        secrets = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign):
+                continue
+            if not isinstance(node.value, ast.Constant) or not isinstance(node.value.value, str):
+                continue
+            value = node.value.value
+            entropy = shannon_entropy(value)
+            for target in node.targets:
+                if not isinstance(target, ast.Name):
+                    continue
+                name = target.id.lower()
+                if any(token in name for token in SECRET_NAMES) or len(value) > 16 and entropy > 4.5:
+                    secrets.append((target.id, value, entropy))
+        return secrets
+
+    def _variable_from_evidence(self, evidence: str) -> str | None:
+        match = re.search(r"(?i)\b([A-Za-z_][A-Za-z0-9_]*)\s*[:=]", evidence)
+        return match.group(1) if match else None
+
+    def _names_in_expr(self, node: ast.AST) -> set[str]:
+        return {child.id for child in ast.walk(node) if isinstance(child, ast.Name)}
+
+    def _is_sensitive_call(self, call_name: str) -> bool:
+        parts = call_name.split(".")
+        if parts and parts[0] in FILESYSTEM_NAMES:
+            return True
+        if len(parts) >= 2 and parts[0] in NETWORK_MODULES and parts[-1] in NETWORK_METHODS:
+            return True
+        if len(parts) >= 2 and parts[-1] in {"open", "read_text", "write_text", "read_bytes", "write_bytes"}:
+            return True
+        return False
+
+    def _call_name(self, node: ast.Call) -> str:
+        if isinstance(node.func, ast.Name):
+            return node.func.id
+        if isinstance(node.func, ast.Attribute):
+            parts = []
+            current = node.func
+            while isinstance(current, ast.Attribute):
+                parts.append(current.attr)
+                current = current.value
+            if isinstance(current, ast.Name):
+                parts.append(current.id)
+            return ".".join(reversed(parts))
+        return ""
 
     def _agent_context_findings(self, content: str, rel: str, lines: list[str]) -> list[Finding]:
         findings: list[Finding] = []
@@ -114,3 +225,11 @@ class AgentSecScanner:
             return path.relative_to(target).as_posix()
         except ValueError:
             return path.as_posix()
+
+
+def shannon_entropy(value: str) -> float:
+    if not value:
+        return 0.0
+    counts = Counter(value)
+    length = len(value)
+    return -sum((count / length) * math.log2(count / length) for count in counts.values())

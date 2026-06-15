@@ -479,3 +479,45 @@ If the user wants to finish the remaining external items:
 
 25. Short final status
 AgentSec Gateway launch package is complete locally and deployed to GitHub Pages. The only remaining items are external/manual setup steps requiring domain, DNS, GitHub admin, mobile browser, and real browser/user interaction access.
+
+26. Enterprise upgrade work completed after this handoff
+Files changed:
+- site/index.html
+- site/styles.css
+- site/dashboard.html
+- site/dashboard.css
+- site/dashboard.js
+- site/sw.js
+- agentsec_scan/rules.py
+- agentsec_scan/scanner.py
+- agentsec_scan/report.py
+- agentsec_scan/cli.py
+- server/app.py
+- requirements-server.txt
+- tests/test_scanner.py
+
+Work done:
+- Redesigned landing page with premium dark glassmorphic UI, HSL neon accents, radial glows, and hover micro-animations.
+- Redesigned dashboard with glass panels, upload/report viewer shell, risk meters, category charts, and file findings list.
+- Added client-side drag-and-drop JSON report parser in dashboard.js.
+- Added interactive canvas risk trend and category breakdown charts.
+- Added file-by-file findings list with review checkboxes.
+- Added entropy-based high-entropy secret detection in scanner/rules.
+- Added Python AST context analysis for credential variables and network/filesystem sinks.
+- Added remediation text to markdown and SARIF reports.
+- Enhanced CLI output with colored finding blocks, exact snippets, and remediation guidance.
+- Added --init-vscode to create .vscode/tasks.json and .vscode/extensions.json.
+- Completed FastAPI scan upload endpoints with SQLite persistence, background thread scanning, token validation, and slowapi rate limiting.
+- Added slowapi to requirements-server.txt.
+- Added scanner tests for entropy context and sink detection.
+
+Validation:
+- python -m unittest discover -s tests: 7 tests OK
+- python -m compileall agentsec_scan server tests: passed
+- node --check site/app.js site/install-prompt.js site/sw.js site/dashboard.js: passed
+- python -m json.tool site/manifest.webmanifest: passed
+- git diff --check: no whitespace errors
+- server import smoke test: passed
+- FastAPI upload/list/get smoke test: passed
+- Local browser checks on http://127.0.0.1:8080/: landing loads, dashboard renders demo data, drop zone exists, charts exist
+

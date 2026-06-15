@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from .policy import Policy
-from .report import write_reports
+from .report import remediation_for, write_reports
 from .rules import FAIL_LEVELS
 from .scanner import AgentSecScanner
 
@@ -19,10 +19,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--baseline", default=None, help="Previous JSON report to compare against")
     parser.add_argument("--fail-on", default="critical", choices=sorted(FAIL_LEVELS), help="Exit non-zero when findings reach this severity")
     parser.add_argument("--quiet", action="store_true", help="Print only the final risk score")
+    parser.add_argument("--init-vscode", action="store_true", help="Create .vscode/tasks.json and .vscode/extensions.json for local scanning")
     args = parser.parse_args(argv)
     target = Path(args.target)
     if not target.exists():
         parser.error(f"Target does not exist: {target}")
+    if args.init_vscode:
+        init_vscode()
     formats = parse_formats(args.formats)
     policy = Policy.from_file(args.policy)
     policy.exclude_paths.update(args.exclude)
@@ -31,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     comparison = compare_with_baseline(result.findings, args.baseline) if args.baseline else None
     if not args.quiet:
         print_terminal_summary(result, written, comparison)
+        print_terminal_findings(result)
     else:
         print(json.dumps(result.summary, indent=2))
     return exit_code(result, args.fail_on)
@@ -79,6 +83,56 @@ def print_terminal_summary(result, written: dict[str, str], comparison: dict | N
         print(f"{fmt} report: {path}")
     if comparison is not None:
         print(f"Baseline comparison: added={len(comparison['added'])}, removed={len(comparison['removed'])}, unchanged={comparison['unchanged']}")
+
+
+def print_terminal_findings(result) -> None:
+    if not result.findings:
+        print("\nNo findings detected.")
+        return
+    print("\nFindings")
+    for finding in result.findings:
+        severity = finding.severity.upper()
+        print(f"\n{color(severity, 31)} {finding.rule_id} - {finding.title}")
+        print(f"  {color(finding.file + ':' + str(finding.line), 36)}")
+        print(f"  > {highlight_snippet(finding.snippet)}")
+        print(f"  Remediation: {remediation_for(finding)}")
+
+
+def highlight_snippet(snippet: str) -> str:
+    if not snippet:
+        return ""
+    compact = snippet.replace("\n", " ")
+    if len(compact) > 180:
+        compact = compact[:177] + "..."
+    return color(compact, 31)
+
+
+def color(value: str, code: int) -> str:
+    if not sys.stdout.isatty():
+        return value
+    return f"\033[{code}m{value}\033[0m"
+
+
+def init_vscode() -> None:
+    vscode = Path.cwd() / ".vscode"
+    vscode.mkdir(parents=True, exist_ok=True)
+    tasks = {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "agentsec-scan current workspace",
+                "type": "shell",
+                "command": "agentsec-scan",
+                "args": [".", "--format", "markdown,json,sarif", "--output-dir", "agentsec-report"],
+                "problemMatcher": [],
+                "group": {"kind": "test", "isDefault": True},
+            }
+        ],
+    }
+    extensions = {"recommendations": ["ms-python.python", "ms-vscode.vscode-json-tools"]}
+    (vscode / "tasks.json").write_text(json.dumps(tasks, indent=2) + "\n", encoding="utf-8")
+    (vscode / "extensions.json").write_text(json.dumps(extensions, indent=2) + "\n", encoding="utf-8")
+    print("Created .vscode/tasks.json and .vscode/extensions.json")
 
 
 def exit_code(result, fail_on: str) -> int:
